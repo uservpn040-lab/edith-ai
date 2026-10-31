@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+.env
+*.egg-info/
+dist/
+build/
+
+# Models (large files)
+models/*.onnx
+models/*.tflite
+models/*.bin
+*.gguf
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.log
+
+# Audio temp
+*.wav
+*.mp3
+tmp/
