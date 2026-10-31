@@ -1,0 +1,52 @@
+"""
+Text-to-Speech for EDITH.
+Primary: edge-tts (neural, female voices)
+Fallback: pyttsx3
+"""
+
+import asyncio
+import edge_tts
+import tempfile
+import sounddevice as sd
+import soundfile as sf
+from pathlib import Path
+import pyttsx3
+
+
+class TextToSpeech:
+    def __init__(self, voice: str = "en-US-AriaNeural"):
+        self.voice = voice
+        self.engine = None
+        try:
+            self.engine = pyttsx3.init()
+            voices = self.engine.getProperty("voices")
+            for v in voices:
+                if "female" in v.name.lower() or "zira" in v.name.lower() or "samantha" in v.name.lower():
+                    self.engine.setProperty("voice", v.id)
+                    break
+        except Exception:
+            pass
+        print(f"[TTS] Ready (preferred voice: {voice})")
+
+    async def _speak_edge(self, text: str):
+        communicate = edge_tts.Communicate(text, self.voice)
+        with tempfile.NamedTemporaryFile(suffix=".mp3", delete=False) as f:
+            await communicate.save(f.name)
+            data, sr = sf.read(f.name)
+            sd.play(data, sr)
+            sd.wait()
+        Path(f.name).unlink(missing_ok=True)
+
+    def speak(self, text: str):
+        if not text:
+            return
+        print(f"[TTS] Speaking: {text[:80]}...")
+        try:
+            asyncio.run(self._speak_edge(text))
+        except Exception as e:
+            print(f"[TTS] edge-tts failed ({e}), falling back to pyttsx3")
+            if self.engine:
+                self.engine.say(text)
+                self.engine.runAndWait()
+            else:
+                print("[TTS] No TTS available.")
